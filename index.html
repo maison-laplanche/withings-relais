@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Retour Withings</title>
+<title>Retour vers le portail</title>
 <style>
   body { font: 20px/1.4 system-ui, sans-serif; margin: 0; padding: 24px; background: #e8eceb; color: #18262e; }
   main { max-width: 560px; margin: 10vh auto; }
@@ -18,22 +18,27 @@
   <p id="msg">Un instant.</p>
 </main>
 <script>
-  // Page relais du Portail Maison : Withings exige une adresse publique en https.
-  // Elle renvoie simplement le navigateur vers le portail de la maison (adresse locale uniquement).
+  // Page relais du Portail Maison : Withings et Enable Banking (budget) exigent une adresse publique en https.
+  // Elle renvoie simplement le navigateur vers le portail de la maison (adresse locale uniquement),
+  // à la page de retour indiquée dans « state » (Withings par défaut).
   // Aucune donnée n'est enregistrée ni envoyée ailleurs.
   (function () {
     var params = new URLSearchParams(location.search);
     var msg = document.getElementById('msg');
     var origin = '';
+    var page = '/api/bienetre/withings/retour';
+    var pages = ['/api/bienetre/withings/retour', '/budget/retour'];
     try {
-      origin = JSON.parse(atob((params.get('state') || '').replace(/-/g, '+').replace(/_/g, '/'))).r || '';
+      var state = JSON.parse(atob((params.get('state') || '').replace(/-/g, '+').replace(/_/g, '/')));
+      origin = state.r || '';
+      if (pages.indexOf(state.p) >= 0) page = state.p;
     } catch (e) {}
     var local = /^https?:\/\/(localhost|127\.\d+\.\d+\.\d+|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|[a-z0-9-]+\.local|maison\.laplanche)(:\d+)?$/i;
     if (local.test(origin)) {
-      location.replace(origin + '/api/bienetre/withings/retour' + location.search);
+      location.replace(origin + page + location.search);
       msg.textContent = 'Si rien ne se passe, vérifiez que vous êtes sur le Wi-Fi de la maison (ou sur WireGuard).';
     } else {
-      msg.innerHTML = 'Copiez l’adresse de cette page et collez-la dans le portail (page Bien-être) :';
+      msg.innerHTML = 'Copiez l’adresse de cette page et collez-la dans le portail (page Bien-être ou Budget) :';
       var code = document.createElement('code');
       code.textContent = location.href;
       msg.after(code);
